@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>事件周围天气可视化</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/modern-css-reset/dist/reset.min.css"
+    />
+    <style>
+      body {
+        font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+        background: #f6f8fb;
+        color: #1f2a44;
+        padding: 32px;
+      }
+
+      .card {
+        max-width: 960px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+        padding: 24px 32px 32px;
+      }
+
+      h1 {
+        font-size: 24px;
+        font-weight: 600;
+        margin-bottom: 8px;
+      }
+
+      p {
+        margin: 8px 0 16px;
+        color: #5f6b86;
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+
+      label {
+        display: flex;
+        flex-direction: column;
+        font-size: 14px;
+        color: #3b485e;
+        gap: 6px;
+      }
+
+      input[type="date"],
+      input[type="number"] {
+        border: 1px solid #d7dde8;
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 14px;
+        min-width: 180px;
+      }
+
+      button {
+        border: none;
+        background: #3b82f6;
+        color: #fff;
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+
+      button:hover {
+        background: #2563eb;
+      }
+
+      .meta {
+        font-size: 13px;
+        color: #7b879d;
+      }
+
+      canvas {
+        margin-top: 16px;
+      }
+
+      .notice {
+        margin-top: 12px;
+        padding: 12px 14px;
+        background: #eff6ff;
+        border-radius: 10px;
+        color: #1e3a8a;
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>当前事件周围一周天气</h1>
+      <p>
+        选择事件日期与地点坐标（默认北京），展示事件前后 3 天的温度与降水。
+      </p>
+      <div class="controls">
+        <label>
+          事件日期
+          <input id="eventDate" type="date" />
+        </label>
+        <label>
+          纬度
+          <input id="latitude" type="number" step="0.0001" value="39.9042" />
+        </label>
+        <label>
+          经度
+          <input id="longitude" type="number" step="0.0001" value="116.4074" />
+        </label>
+        <button id="loadBtn">加载天气</button>
+      </div>
+      <div class="meta" id="meta"></div>
+      <canvas id="weatherChart" height="120"></canvas>
+      <div class="notice">
+        数据来源：Open-Meteo（无需 API Key）。若需切换城市，可输入对应的经纬度。
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const eventDateInput = document.getElementById("eventDate");
+      const latInput = document.getElementById("latitude");
+      const lonInput = document.getElementById("longitude");
+      const meta = document.getElementById("meta");
+      const loadBtn = document.getElementById("loadBtn");
+
+      const today = new Date();
+      eventDateInput.valueAsDate = today;
+
+      const chartContext = document.getElementById("weatherChart").getContext("2d");
+      const weatherChart = new Chart(chartContext, {
+        type: "line",
+        data: {
+          labels: [],
+          datasets: [
+            {
+              label: "日最高温 (°C)",
+              data: [],
+              borderColor: "#ef4444",
+              backgroundColor: "rgba(239, 68, 68, 0.2)",
+              tension: 0.3,
+            },
+            {
+              label: "日最低温 (°C)",
+              data: [],
+              borderColor: "#3b82f6",
+              backgroundColor: "rgba(59, 130, 246, 0.2)",
+              tension: 0.3,
+            },
+            {
+              label: "降水量 (mm)",
+              data: [],
+              borderColor: "#10b981",
+              backgroundColor: "rgba(16, 185, 129, 0.2)",
+              tension: 0.3,
+              yAxisID: "precip",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              title: {
+                display: true,
+                text: "温度 (°C)",
+              },
+            },
+            precip: {
+              position: "right",
+              title: {
+                display: true,
+                text: "降水量 (mm)",
+              },
+              grid: {
+                drawOnChartArea: false,
+              },
+            },
+          },
+        },
+      });
+
+      function formatDate(date) {
+        return date.toISOString().split("T")[0];
+      }
+
+      async function loadWeather() {
+        const baseDate = new Date(eventDateInput.value);
+        if (Number.isNaN(baseDate.getTime())) {
+          meta.textContent = "请选择有效日期。";
+          return;
+        }
+
+        const startDate = new Date(baseDate);
+        startDate.setDate(baseDate.getDate() - 3);
+        const endDate = new Date(baseDate);
+        endDate.setDate(baseDate.getDate() + 3);
+
+        const latitude = Number.parseFloat(latInput.value);
+        const longitude = Number.parseFloat(lonInput.value);
+
+        meta.textContent = `正在加载 ${formatDate(startDate)} 至 ${formatDate(
+          endDate
+        )} 的天气数据...`;
+
+        const url =
+          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}` +
+          `&longitude=${longitude}` +
+          `&daily=temperature_2m_max,temperature_2m_min,precipitation_sum` +
+          `&timezone=auto&start_date=${formatDate(startDate)}` +
+          `&end_date=${formatDate(endDate)}`;
+
+        try {
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error("天气接口响应失败");
+          }
+
+          const payload = await response.json();
+          const labels = payload.daily.time.map((time) => time.slice(5));
+          weatherChart.data.labels = labels;
+          weatherChart.data.datasets[0].data = payload.daily.temperature_2m_max;
+          weatherChart.data.datasets[1].data = payload.daily.temperature_2m_min;
+          weatherChart.data.datasets[2].data = payload.daily.precipitation_sum;
+          weatherChart.update();
+
+          meta.textContent = `已展示 ${labels.length} 天的天气。`;
+        } catch (error) {
+          meta.textContent = "加载失败，请检查网络或坐标。";
+        }
+      }
+
+      loadBtn.addEventListener("click", loadWeather);
+      loadWeather();
+    </script>
+  </body>
+</html>
