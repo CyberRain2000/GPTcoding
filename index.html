@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GeoVerse - 3D 地球空间可视化</title>
+    <link
+      href="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Widgets/widgets.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="cesiumContainer"></div>
+      <aside class="panel">
+        <h1>GeoVerse</h1>
+        <p>在宇宙视角中展示实时公开地球空间数据。</p>
+
+        <section>
+          <h2>数据图层</h2>
+          <label><input type="checkbox" id="earthquakeToggle" checked /> 地震 (USGS)</label>
+          <label><input type="checkbox" id="eonetToggle" checked /> 全球灾害事件 (NASA EONET)</label>
+          <label><input type="checkbox" id="radarToggle" checked /> 降雨雷达 (RainViewer)</label>
+          <label><input type="checkbox" id="issToggle" checked /> 国际空间站轨迹 (Open Notify)</label>
+        </section>
+
+        <section>
+          <h2>刷新控制</h2>
+          <button id="refreshNow">立即刷新全部数据</button>
+          <small>默认每 5 分钟刷新一次。</small>
+        </section>
+
+        <section>
+          <h2>当前摘要</h2>
+          <ul id="summary">
+            <li>地震：加载中...</li>
+            <li>灾害事件：加载中...</li>
+            <li>ISS 位置：加载中...</li>
+          </ul>
+        </section>
+      </aside>
+    </div>
+
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.117/Build/Cesium/Cesium.js"></script>
+    <script src="./app.js" type="module"></script>
+  </body>
+</html>
