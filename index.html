@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GeoCosmos · 3D 地球实时环境态势</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <main id="app">
+      <canvas id="scene"></canvas>
+      <aside class="panel">
+        <h1>GeoCosmos</h1>
+        <p class="subtitle">3D 地球 + 公开 API 环境数据</p>
+
+        <section>
+          <div class="section-title">数据源状态</div>
+          <ul id="status-list"></ul>
+        </section>
+
+        <section>
+          <div class="section-title">实时信息</div>
+          <ul id="summary"></ul>
+        </section>
+
+        <section>
+          <div class="section-title">交互说明</div>
+          <ul class="help">
+            <li>左键拖拽：旋转地球</li>
+            <li>滚轮：缩放</li>
+            <li>右键拖拽：平移视角</li>
+            <li>点击“刷新数据”：重新拉取公开 API</li>
+          </ul>
+          <button id="refresh">刷新数据</button>
+        </section>
+      </aside>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
